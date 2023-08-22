@@ -11,11 +11,28 @@ fn main(
   polynomial_commitment: pub Field,
   nullifier: pub [u8; 32],
 ) {
-  // Write your main logic here
+  // Create an instance of PubKey struct
+  let key = ecrecover::secp256k1::PubKey::from_unified(pub_key);
+
+  // Verify signature is valid, user is therefore in possession private key.
+  assert(key.verify_sig(signature, hashed_message));
+
+  // Get address
+  let addr = key.to_eth_address();
+
+  // Check address is included in polynomial
+  assert(evaluate_polynomial(polynomial, addr) == 0);
+
+  // Test polynomial is valid
+  assert(polynomial_commitment == std::hash::pedersen(polynomial)[0]);
+
+  // Check the given nullifier is a valid blake hash of signature
+  let blake = std::hash::blake2s(signature);
+  assert(nullifier == blake);
 }
 
 fn evaluate_polynomial(polynomial: [Field; CANDIDATES + 1], x: Field) -> Field {
-  // Write logic to evaluate polynomial here
+  (polynomial[2] * x * x) + (polynomial[1] * x) + polynomial[0]
 }
 
 #[test]
